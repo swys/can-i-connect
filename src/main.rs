@@ -9,6 +9,8 @@ use self::error::Result;
 use crate::types::{CanIConnect, Options};
 use argc::argc_app;
 use log::{error, info};
+use reqwest::Client;
+use std::time::Duration;
 use types::create_logger;
 
 #[tokio::main]
@@ -28,7 +30,12 @@ async fn main() -> Result<()> {
 		http: options.http_hosts,
 		tcp: options.tcp_hosts,
 		timeout: options.timeout,
-		http_client: None,
+		http_client: Some(
+			Client::builder()
+				.timeout(Duration::from_secs(options.timeout as u64))
+				.build()
+				.unwrap(),
+		),
 	};
 	let connection_results = can_i_connect.connection_report().await;
 	info!(

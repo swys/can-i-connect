@@ -52,6 +52,11 @@ __NOTE:__ there must be at least one host listed in either `--http-hosts` or `--
 No hosts supplied. Must supply hosts through --http-hosts or --tcp-hosts args. Both cannot be empty!
 ```
 
+#### --timeout:
+how much time in seconds to wait while connecting to a host before giving up
+example: `10`
+default: `5`
+
 #### --log-level:
 comma seperated list of tcp hosts
 expected format: `<dns hostname|ip address>:<port>`
