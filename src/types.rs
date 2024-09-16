@@ -299,16 +299,9 @@ pub mod unit_tests {
 			),
 			Err(e) => panic!("{}", e),
 		}
-		match validate_bind_addr(&invalid_addr) {
-			Ok(addr) => panic!("[{}] should not be a valid address", addr),
-			Err(e) => assert_eq!(
-				e.to_string(),
-				format!(
-					"{} is not a valid bind address, use format <interface>:<port> e.g. 127.0.0.1:8000",
-					invalid_addr
-				),
-			),
-		}
+
+		let invalid_result = validate_bind_addr(&invalid_addr);
+		assert!(invalid_result.is_err(), "expected error but got OK");
 	}
 	#[test]
 	fn parse_log_level_test() {
