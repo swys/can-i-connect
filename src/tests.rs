@@ -1,5 +1,5 @@
 #[cfg(test)]
-pub mod unit {
+pub mod integration {
 	use crate::{
 		error::Error,
 		types::{CanIConnect, ConnectionType},

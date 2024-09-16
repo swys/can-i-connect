@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 ansi_term = "0.12.1"
+axum = "0.7.5"
 clap = { version = "4.5.16", features = ["cargo"] }
 derive_more = { version = "1.0.0", features = ["from", "display"] }
 env_logger = "0.11.5"

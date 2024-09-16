@@ -17,6 +17,11 @@ pub enum Error {
 	#[display("No hosts supplied. Must supply hosts through --http-hosts or --tcp-hosts args. Both cannot be empty!")]
 	NoHostsSupplied,
 	DNSResolutionFailed(String),
+	#[display(
+		"{} is not a valid bind address, use format <interface>:<port> e.g. 127.0.0.1:8000",
+		_0
+	)]
+	InvalidSocketAddr(String),
 
 	// -- Externals
 	#[from]

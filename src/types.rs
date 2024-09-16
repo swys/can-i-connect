@@ -111,6 +111,13 @@ async fn handle_tcp(host: &String, timeout: usize) -> Result<bool> {
 	}
 }
 
+fn validate_bind_addr(addr: &String) -> Result<SocketAddr> {
+	match addr.parse::<SocketAddr>() {
+		Ok(socket_addr) => Ok(socket_addr),
+		Err(_) => Err(Error::InvalidSocketAddr(addr.clone())),
+	}
+}
+
 // endregion: functions
 
 // region: enums
@@ -143,6 +150,7 @@ pub struct Options {
 	pub timeout: usize,
 	pub log_level: LevelFilter,
 	pub no_color: bool,
+	pub listen: String,
 }
 
 // endregion: structs
@@ -241,7 +249,19 @@ impl Options {
 		let log_level = parse_log_level(&level)?;
 		let no_color = argc.get_flag("no-color");
 
-		if http_hosts.len() == 0 && tcp_hosts.len() == 0 {
+		let listen = match argc.get_one::<String>("listen") {
+			Some(bind_addr) => {
+				let bind_addr = validate_bind_addr(bind_addr).map_err(|e| e);
+				match bind_addr {
+					Ok(addr) => addr.to_string(),
+					Err(e) => return Err(e),
+				}
+			}
+			None => String::from(""),
+		};
+
+		// throw if there are 0 hosts specified and user did not specify to run in server mode via --listen
+		if (http_hosts.len() == 0 && tcp_hosts.len() == 0) && listen != "" {
 			return Err(Error::NoHostsSupplied);
 		}
 
@@ -251,8 +271,76 @@ impl Options {
 			timeout,
 			log_level,
 			no_color,
+			listen,
 		})
 	}
 }
 
 // endregion: methods
+
+// region: unit tests
+#[cfg(test)]
+pub mod unit_tests {
+	use log::LevelFilter;
+
+	use super::{parse_log_level, validate_bind_addr};
+
+	#[test]
+	fn validate_bind_addr_test() {
+		let valid_addr = String::from("127.0.0.1:8000");
+		let invalid_addr = String::from("[:::1]:8000");
+		match validate_bind_addr(&valid_addr) {
+			Ok(addr) => assert_eq!(
+				addr.to_string(),
+				valid_addr.clone(),
+				"{} is a valid address and it should match the return but we get [{}] instead",
+				valid_addr,
+				addr.to_string()
+			),
+			Err(e) => panic!("{}", e),
+		}
+		match validate_bind_addr(&invalid_addr) {
+			Ok(addr) => panic!("[{}] should not be a valid address", addr),
+			Err(e) => assert_eq!(
+				e.to_string(),
+				format!(
+					"{} is not a valid bind address, use format <interface>:<port> e.g. 127.0.0.1:8000",
+					invalid_addr
+				),
+			),
+		}
+	}
+	#[test]
+	fn parse_log_level_test() {
+		let valid_debug_log_levels = vec![
+			String::from("debug"),
+			String::from("DEBUG"),
+			String::from("dEbUg"),
+		];
+		for level in valid_debug_log_levels {
+			let result = parse_log_level(&level);
+			match result {
+				Ok(log_level) => assert_eq!(log_level, LevelFilter::Debug),
+				Err(e) => panic!("did not expect to get error but got: [{}]", e.to_string()),
+			}
+		}
+		let valid_error_log_levels = vec![
+			String::from("error"),
+			String::from("ERROR"),
+			String::from("eRroR"),
+		];
+		for level in valid_error_log_levels {
+			let result = parse_log_level(&level);
+			match result {
+				Ok(log_level) => assert_eq!(log_level, LevelFilter::Error),
+				Err(e) => panic!("did not expect to get error but got: [{}]", e.to_string()),
+			}
+		}
+		let invalid_log_levels = vec![String::from("critical")];
+		for level in invalid_log_levels {
+			let result = parse_log_level(&level);
+			assert!(result.is_err(), "expected error but got Ok");
+		}
+	}
+}
+// endregion: unit tests
