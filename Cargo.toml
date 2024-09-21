@@ -7,10 +7,12 @@ edition = "2021"
 
 [dependencies]
 ansi_term = "0.12.1"
+anyhow = "1.0.89"
 axum = "0.7.5"
 clap = { version = "4.5.16", features = ["cargo"] }
 derive_more = { version = "1.0.0", features = ["from", "display"] }
 env_logger = "0.11.5"
+httpc-test = "0.1.10"
 httpmock = "0.7.0"
 log = "0.4.22"
 reqwest = { version = "0.12", features = ["json"] }
