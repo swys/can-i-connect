@@ -1,8 +1,8 @@
 #[cfg(test)]
 pub mod integration {
 	use crate::{
+		can_i_connect::{CanIConnect, ConnectionType},
 		error::Error,
-		types::{CanIConnect, ConnectionType},
 	};
 	use httpmock::prelude::*;
 	use reqwest::Client;
@@ -29,6 +29,8 @@ pub mod integration {
 			tcp: vec![server.address().to_string()],
 			timeout: 5,
 			http_client: None,
+			server_mode: false,
+			listen_addr: String::from(""),
 		};
 		for url in &can_connect.http {
 			match can_connect.can_connect(ConnectionType::HTTP, url).await {
@@ -55,6 +57,8 @@ pub mod integration {
 			http: vec![server.url("/timeout")],
 			tcp: vec![server.address().to_string()],
 			timeout,
+			server_mode: false,
+			listen_addr: String::from(""),
 			http_client: Some(
 				Client::builder()
 					.timeout(Duration::from_secs(1))
