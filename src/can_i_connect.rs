@@ -1,15 +1,9 @@
 use crate::error::Result;
 use crate::helpers::{handle_http, handle_tcp};
-use axum::{
-	extract::{Path, Request},
-	response::{Html, IntoResponse},
-	routing::get,
-	Json, Router,
-};
-use clap::crate_version;
+use crate::web;
+use axum::Router;
 use log::{debug, error, info};
 use reqwest::Client;
-use serde_json::{json, Value};
 use std::net::SocketAddr;
 
 // region: enums
@@ -101,34 +95,15 @@ impl CanIConnect {
 	pub async fn bind(self: &Self) {
 		info!("In Server Mode, listening on: {}", self.listen_addr);
 		// handler func
-		async fn health_handler() -> Json<Value> {
-			Json(json!({
-				"healthy": true,
-				"version": crate_version!(),
-			}))
-		}
-		async fn handler(req: Request) -> Html<String> {
-			let path = req.uri().path(); // Get the path from the request
-			info!(">>>>>> Received request on {}", path);
-
-			Html(format!("Hello <strong>World!!!!!!</strong>"))
-		}
-		async fn handle2(Path(path): Path<String>) -> impl IntoResponse {
-			debug!("->> {:<4} - handler_handler2 - {path:?}", "HANDLER");
-			Html(format!("Hello2 <strong>World!!!!!!</strong>"))
-		}
 		// setup routes
-		let app = Router::new()
-			.route("/health", get(health_handler))
-			.route("/hi/:name", get(handle2))
-			.fallback(handler);
+		let routes_all = Router::new().merge(web::routes_health::routes());
 		// start server
 		let addr = self.listen_addr.parse::<SocketAddr>().unwrap();
 		debug!("Binding to: {addr}");
 		let listener = tokio::net::TcpListener::bind(&self.listen_addr)
 			.await
 			.unwrap();
-		axum::serve(listener, app.into_make_service())
+		axum::serve(listener, routes_all.into_make_service())
 			.await
 			.unwrap();
 	}
