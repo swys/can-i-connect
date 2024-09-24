@@ -1,3 +1,6 @@
+// allows us to: `use crate::{Error, Result};`
+pub use self::error::{Error, Result};
+
 // modules
 mod argc;
 mod can_i_connect;
@@ -5,9 +8,9 @@ mod error;
 mod helpers;
 mod integration_tests;
 mod options;
+mod web;
 
 // imports
-use self::error::Result;
 use crate::can_i_connect::CanIConnect;
 use crate::options::Options;
 use argc::argc_app;
