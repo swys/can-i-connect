@@ -7,6 +7,7 @@ use std::{
 	io::Write,
 	net::{SocketAddr, SocketAddrV4, TcpStream, ToSocketAddrs},
 	str::FromStr,
+	sync::Arc,
 	time::Duration,
 };
 
@@ -81,7 +82,7 @@ pub async fn handle_http(host: &String, client: Option<&Client>, timeout: usize)
 			if e.is_timeout() {
 				Err(Error::RequestTimedOut(timeout))
 			} else {
-				Err(Error::ReqwestError(e))
+				Err(Error::ReqwestError(Arc::new(e)))
 			}
 		}
 	}
@@ -113,6 +114,10 @@ pub fn validate_bind_addr(addr: &String) -> Result<SocketAddr> {
 	}
 }
 
+pub fn handler_log(path: &str) -> String {
+	return format!("->> {:<4} - handler_health - {path}", "HANDLER");
+}
+
 // endregion: functions
 
 // region: unit tests
@@ -120,7 +125,7 @@ pub fn validate_bind_addr(addr: &String) -> Result<SocketAddr> {
 pub mod unit_tests {
 	use log::LevelFilter;
 
-	use super::{parse_log_level, validate_bind_addr};
+	use super::{handler_log, parse_log_level, validate_bind_addr};
 
 	#[test]
 	fn validate_bind_addr_test() {
@@ -171,6 +176,16 @@ pub mod unit_tests {
 			let result = parse_log_level(&level);
 			assert!(result.is_err(), "expected error but got Ok");
 		}
+	}
+
+	#[test]
+	fn handler_log_test() {
+		let path = "/health";
+		let result = handler_log(path);
+		assert_eq!(
+			result, "->> HANDLER - handler_health - /health",
+			"unexpected result from handler_log function"
+		);
 	}
 }
 // endregion: unit tests
