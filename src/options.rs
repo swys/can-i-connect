@@ -31,7 +31,6 @@ impl Options {
 				.map(|el| el.to_string())
 				.collect::<Vec<String>>(),
 			None => {
-				//println!("No http hosts supplied");
 				vec![]
 			}
 		};
@@ -41,7 +40,6 @@ impl Options {
 				.map(|el| el.to_string())
 				.collect::<Vec<String>>(),
 			None => {
-				//println!("No tcp hosts supplied");
 				vec![]
 			}
 		};
