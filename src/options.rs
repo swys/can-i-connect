@@ -4,7 +4,7 @@ use clap::ArgMatches;
 use log::LevelFilter;
 
 // region: constants
-const DEFAULT_TIMEOUT: usize = 5;
+pub const DEFAULT_TIMEOUT: usize = 5;
 const DEFAULT_LOG_LEVEL: &str = "info";
 
 // end region: constants

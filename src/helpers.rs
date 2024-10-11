@@ -79,6 +79,7 @@ pub async fn handle_http(host: &String, client: Option<&Client>, timeout: usize)
 			Ok(true)
 		}
 		Err(e) => {
+			error!("HTTP Error: {}", e);
 			if e.is_timeout() {
 				Err(Error::RequestTimedOut(timeout))
 			} else {
@@ -116,6 +117,13 @@ pub fn validate_bind_addr(addr: &String) -> Result<SocketAddr> {
 
 pub fn handler_log(path: &str) -> String {
 	return format!("->> {:<4} - handler_health - {path}", "HANDLER");
+}
+
+pub fn was_successful(failed_hosts: Vec<String>) -> bool {
+	if failed_hosts.len() > 0 {
+		return false;
+	}
+	return true;
 }
 
 // endregion: functions

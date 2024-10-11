@@ -1,19 +1,24 @@
 use crate::helpers::handler_log;
-use crate::Result;
-use axum::{extract::Request, routing::get, Json, Router};
+use axum::{extract::OriginalUri, response::IntoResponse, routing::get, Json, Router};
 use clap::crate_version;
 use log::debug;
-use serde_json::{json, Value};
+use reqwest::StatusCode;
+use serde_json::json;
 
 pub fn routes() -> Router {
 	Router::new().route("/health", get(health_handler))
 }
 
-async fn health_handler(req: Request) -> Result<Json<Value>> {
-	let path = req.uri().path();
+async fn health_handler(
+	OriginalUri(original_uri): OriginalUri,
+) -> Result<impl IntoResponse, StatusCode> {
+	let path = original_uri.path();
 	debug!("{}", handler_log(path));
-	Ok(Json(json!({
-		"healthy": true,
-		"version": crate_version!(),
-	})))
+	Ok((
+		StatusCode::OK,
+		Json(json!({
+			"healthy": true,
+			"version": crate_version!(),
+		})),
+	))
 }

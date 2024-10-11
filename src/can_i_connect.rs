@@ -57,6 +57,7 @@ impl CanIConnect {
 		};
 		// check if http hosts are reachable
 		for url in self.http.clone() {
+			debug!("Trying URL: {}", url);
 			match self.can_connect(ConnectionType::HTTP, &url).await {
 				Ok(_) => {
 					result.successful_hosts.push(url.to_string());
@@ -96,7 +97,9 @@ impl CanIConnect {
 		info!("In Server Mode, listening on: {}", self.listen_addr);
 		// handler func
 		// setup routes
-		let routes_all = Router::new().merge(web::routes_health::routes());
+		let routes_all = Router::new()
+			.merge(web::routes_health::routes())
+			.merge(web::routes_can_i_connect::routes());
 		// start server
 		let addr = self.listen_addr.parse::<SocketAddr>().unwrap();
 		debug!("Binding to: {addr}");
