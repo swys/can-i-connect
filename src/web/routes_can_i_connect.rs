@@ -1,6 +1,6 @@
 use crate::{
 	helpers::{handler_log, was_successful},
-	web::route_helpers::{parse_payload_without_timeout, validate_hosts},
+	web::route_helpers::{parse_payload, validate_hosts},
 	CanIConnect,
 };
 use axum::{
@@ -24,7 +24,7 @@ pub async fn can_i_connect_handler(
 	debug!("{:?}", raw_payload);
 
 	// Parse the rest of the payload without the timeout field
-	let payload = match parse_payload_without_timeout(&mut raw_payload) {
+	let payload = match parse_payload(&mut raw_payload) {
 		Ok(p) => p,
 		Err(err) => return Err(err),
 	};

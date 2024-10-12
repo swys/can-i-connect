@@ -4,11 +4,9 @@ use serde_json::{json, Value};
 use std::result::Result as StdResult;
 
 // region functions
-pub fn parse_payload_without_timeout(
+pub fn parse_payload(
 	raw_payload: &mut Value,
 ) -> Result<CanIConnectPayload, (StatusCode, Json<Value>)> {
-	//raw_payload.as_object_mut().unwrap().remove("timeout");
-
 	serde_json::from_value(raw_payload.clone()).map_err(|err| {
 		let error_body = Json(json!({
 				"error": format!("Failed to deserialize payload: {}", err)
