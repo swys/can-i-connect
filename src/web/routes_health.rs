@@ -1,6 +1,6 @@
 use crate::helpers::handler_log;
+use crate::version::VERSION;
 use axum::{extract::OriginalUri, response::IntoResponse, routing::get, Json, Router};
-use clap::crate_version;
 use log::debug;
 use reqwest::StatusCode;
 use serde_json::json;
@@ -18,7 +18,7 @@ async fn health_handler(
 		StatusCode::OK,
 		Json(json!({
 			"healthy": true,
-			"version": crate_version!(),
+			"version": *VERSION,
 		})),
 	))
 }
