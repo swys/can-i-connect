@@ -172,9 +172,9 @@ cargo test
 quick dev setup
 ===============
 
-There is a `quickdev.rs` file located in the `examples` directory. The purpose of this file is to provide a quick and easy way to test the API without the need to keep running the binary in server mode and then sending requests to test its working as expected.
+There is a `quick_dev.rs` file located in the `examples` directory. The purpose of this file is to provide a quick and easy way to test the API without the need to keep running the binary in server mode and then sending requests to test its working as expected.
 
-This can be used to "live reload" after any changes are made. Once there is a change the binary will automatically be rebuild, the new binary will be called and start to listen on a port, and the requests defined in the `examples/quickdev.rs` will automatically trigger and you will see the results after every change.
+This can be used to "live reload" after any changes are made. Once there is a change the binary will automatically be rebuild, the new binary will be called and start to listen on a port, and the requests defined in the `examples/quick_dev.rs` will automatically trigger and you will see the results after every change.
 
 To set this up you'll need 3 different terminal windows:
 
@@ -190,7 +190,7 @@ cargo watch -x "install --path ."
 cargo watch -x build -s './target/debug/can-i-connect --listen 127.0.0.1:8000 --log-level debug'
 ```
 
-#### Terminal 3 (quickdev example)
+#### Terminal 3 (quick_dev example)
 `pwd`: root of this git repo
 ```
 cargo watch -q -c -w /Users/swys/.cargo/bin -x "run --example quick_dev"
