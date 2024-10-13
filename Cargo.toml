@@ -1,9 +1,15 @@
 [package]
 name = "can-i-connect"
-version = "0.1.0"
+version = "0.1.1"
+build = "build.rs"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+# Define a binary target
+[[bin]]
+name = "can-i-connect"
+path = "src/main.rs"   # Adjust path if your binary source file is named differently
 
 [dependencies]
 ansi_term = "0.12.1"
@@ -15,6 +21,7 @@ env_logger = "0.11.5"
 http-body-util = "0.1.2"
 httpc-test = "0.1.10"
 httpmock = "0.7.0"
+lazy_static = "1.5.0"
 log = "0.4.22"
 reqwest = { version = "0.12", features = ["json"] }
 serde = "1.0.210"

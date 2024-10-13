@@ -1,8 +1,9 @@
-use clap::{crate_version, Arg, Command};
+use crate::version::VERSION;
+use clap::{Arg, Command};
 
 pub fn argc_app() -> Command {
 	Command::new("can-i-connect")
-		.version(crate_version!())
+		.version(VERSION.as_str())
 		.about("tool to check connectivity to various hosts using HTTP or TCP")
 		.arg(
 			Arg::new("http-hosts")

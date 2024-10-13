@@ -8,6 +8,7 @@ mod error;
 mod helpers;
 mod integration_tests;
 mod options;
+mod version;
 mod web;
 
 // imports
