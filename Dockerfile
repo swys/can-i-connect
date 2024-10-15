@@ -1,35 +1,42 @@
-# Use Rust slim image as the base image
-FROM rust:1.76.0-slim-buster
+# Stage 1: Builder
+FROM rust:1.70-buster AS builder
 
-# Set the working directory
-WORKDIR /usr/src/can-i-connect
-
-# Install OpenSSL and necessary libraries
+# Install necessary build dependencies, including musl-tools for static linking
 RUN apt-get update && apt-get install -y \
-  libssl-dev \
-  pkg-config \
-  git \
-  dnsutils \
-  netcat-openbsd \
+  musl-tools \
   && rm -rf /var/lib/apt/lists/*
 
-# Copy the Cargo.toml and Cargo.lock files
-COPY Cargo.toml Cargo.lock ./
+# Set environment variables to use musl for static linking
+ENV CC=musl-gcc \
+  CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc
 
-# Fetch dependencies
-RUN cargo fetch
+# Copy your project files
+COPY . /usr/src/can-i-connect
+WORKDIR /usr/src/can-i-connect
 
-# Copy the rest of the source code
-COPY . .
+# Build the project for a static binary using musl
+RUN rustup target add aarch64-unknown-linux-musl \
+  && cargo build --release --target aarch64-unknown-linux-musl
 
-# Build the project in release mode
-RUN cargo build --release
+# Stage 2: Final minimal image with Debian
+FROM debian:buster
 
-# Copy the Rust binary to the clean directory
-RUN cp /usr/src/can-i-connect/target/release/can-i-connect /usr/local/bin/
+# Install any necessary debugging tools
+RUN apt-get update && apt-get install -y \
+  gdb \
+  strace \
+  curl \
+  telnet \
+  netcat \
+  dnsutils \
+  net-tools \
+  && rm -rf /var/lib/apt/lists/*
 
-# Expose a port if needed
+# Copy the statically built binary from the builder stage
+COPY --from=builder /usr/src/can-i-connect/target/aarch64-unknown-linux-musl/release/can-i-connect /usr/local/bin/can-i-connect
+
+# Expose port 8000
 EXPOSE 8000
 
-# Set the entry point for the container
+# Set the entrypoint for the container
 ENTRYPOINT ["/usr/local/bin/can-i-connect"]

@@ -10,7 +10,7 @@ IMAGE_NAME=can-i-connect
 # Default target: build the Docker image
 build:
 	@echo "Building Docker image with tag $(IMAGE_NAME):$(VERSION)-$(COMMIT_HASH)"
-	docker build -t $(IMAGE_NAME):$(VERSION)-$(COMMIT_HASH) .
+	docker build --no-cache -t $(IMAGE_NAME):$(VERSION)-$(COMMIT_HASH) .
 
 # Target to print the version and commit hash (for debugging)
 version:
@@ -20,4 +20,4 @@ version:
 # Target to clean up the Docker image
 clean:
 	@echo "Removing Docker image with tag $(IMAGE_NAME):$(VERSION)-$(COMMIT_HASH)"
-	docker rmi $(IMAGE_NAME):$(VERSION)-$(COMMIT_HASH) || true
+	docker rmi --force $(IMAGE_NAME):$(VERSION)-$(COMMIT_HASH) || true
