@@ -69,6 +69,13 @@ run in Server Mode by binding to <ip address>:<port> e.g. `127.0.0.1:8000` (ipv4
 
 __Note__: If you want to bind to an ipv6 interface you need to wrap the address in quotes.
 
+##### Prometheus
+If you use the `--listen` argument to run in server mode, a prometheus server will automatically be started. The prometheus http server will be running completely seperate of the main applications API. It will use the same `ip address` that is passed in with the `--listen` argument and run on static port of `9100`.
+
+Metrics can be scraped from `<ip address>:9100/metrics`.
+For example if you passed in `--listen 0.0.0.0:8000` then promethus would listen on `0.0.0.0:9100`.
+
+##### Handlers
 When running in server mode, using `--listen`, it becomes an API. See below for the list of handlers that can be called, and all of the available options.
 
 ##### /health handler
