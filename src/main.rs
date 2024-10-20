@@ -7,12 +7,14 @@ mod can_i_connect;
 mod error;
 mod helpers;
 mod integration_tests;
+mod metrics;
 mod options;
 mod version;
 mod web;
 
 // imports
 use crate::can_i_connect::CanIConnect;
+use crate::metrics::start_metrics_server;
 use crate::options::Options;
 use argc::argc_app;
 use helpers::create_logger;
@@ -53,8 +55,15 @@ async fn main() -> Result<()> {
 		// we are in server mode
 		info!(
 			"Server mode Activated! Listening on: {}",
-			can_i_connect.listen_addr
+			&can_i_connect.listen_addr
 		);
+		// clone listen_addr so we can use it to start the metrics server
+		let listen_addr = can_i_connect.listen_addr.clone();
+		// start up prometheus server
+		tokio::spawn(async {
+			start_metrics_server(listen_addr).await;
+		});
+		// start up main server
 		can_i_connect.bind().await;
 	} else {
 		// we are in CLI mode
