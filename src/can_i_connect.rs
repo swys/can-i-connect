@@ -1,7 +1,8 @@
 use crate::error::Result;
 use crate::helpers::{handle_http, handle_tcp};
+use crate::metrics::track_metrics;
 use crate::web;
-use axum::Router;
+use axum::{middleware, Router};
 use log::{debug, error, info};
 use reqwest::Client;
 use std::net::SocketAddr;
@@ -99,9 +100,14 @@ impl CanIConnect {
 		// setup routes
 		let routes_all = Router::new()
 			.merge(web::routes_health::routes())
-			.merge(web::routes_can_i_connect::routes());
+			.merge(web::routes_can_i_connect::routes())
+			.route_layer(middleware::from_fn(track_metrics));
 		// start server
-		let addr = self.listen_addr.parse::<SocketAddr>().unwrap();
+		let addr = self.listen_addr
+      .parse::<SocketAddr>()
+      .expect(
+        &format!("Failed to parse listen address '{}'. Please ensure the format is 'IP:PORT' and have valid values", self.listen_addr)
+      );
 		debug!("Binding to: {addr}");
 		let listener = tokio::net::TcpListener::bind(&self.listen_addr)
 			.await
