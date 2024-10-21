@@ -13,11 +13,10 @@ async fn main() -> Result<()> {
 			"http_hosts": [
 				"https://duckduckgo.com",
 				"https://rust-lang.org",
-				"https://apple.com"
 			],
 			"tcp_hosts": [
 				"duckduckgo.com:443",
-				"rust-lang.org:443"
+				"ipv6.google.com:80"
 			],
 		}),
 	);

@@ -1,11 +1,14 @@
-use crate::error::{Error, Result};
+use crate::{
+	dns::{DefaultResolver, DnsResolver},
+	error::{Error, Result},
+};
 use ansi_term::Colour;
 use env_logger::{Builder, Target};
 use log::{debug, error, warn, Level, LevelFilter, Record};
 use reqwest::Client;
 use std::{
 	io::Write,
-	net::{SocketAddr, SocketAddrV4, TcpStream, ToSocketAddrs},
+	net::{SocketAddr, SocketAddrV6, TcpStream},
 	str::FromStr,
 	sync::Arc,
 	time::Duration,
@@ -54,19 +57,33 @@ pub fn create_logger(with_color: bool) -> Builder {
 	builder // Return the owned Builder instance
 }
 
-pub fn get_ipv4_address(host: &str) -> Result<Option<SocketAddrV4>> {
+// Returns the first ip address the given host resolves to (prefers IPV4, falls back to IPV6)
+pub fn get_address(resolver: &dyn DnsResolver, host: &str) -> Result<Option<SocketAddr>> {
 	debug!("Attempting to resolve dns for address: {}", host);
-	let addrs = host
-		.to_socket_addrs()
-		.map_err(|_| Error::DNSResolutionFailed(host.to_string()))?;
+	let addrs = resolver.resolve(host)?;
+	let mut ipv6_fallback: Option<SocketAddrV6> = None;
 	for addr in addrs {
-		if let SocketAddr::V4(ipv4_addr) = addr {
-			debug!("{} resolved to {} IPv4 address", host, ipv4_addr);
-			return Ok(Some(ipv4_addr));
+		match addr {
+			SocketAddr::V4(ipv4_addr) => {
+				debug!("{} resolved to {} (IPv4)", host, ipv4_addr);
+				return Ok(Some(SocketAddr::V4(ipv4_addr)));
+			}
+			SocketAddr::V6(ipv6_addr) => {
+				if ipv6_fallback.is_none() {
+					ipv6_fallback = Some(ipv6_addr);
+				}
+			}
 		}
 	}
+	if let Some(ipv6_addr) = ipv6_fallback {
+		debug!(
+			"{} did not resolve to any IPv4 addresses, falling back to IPv6: {}",
+			host, ipv6_addr
+		);
+		return Ok(Some(SocketAddr::V6(ipv6_addr)));
+	}
 	debug!("{} did not resolve to any IPv4 addresses", host);
-	Ok(None) // No IPv4 address found
+	Ok(None) // No addresses found
 }
 
 pub async fn handle_http(host: &String, client: Option<&Client>, timeout: usize) -> Result<bool> {
@@ -91,10 +108,11 @@ pub async fn handle_http(host: &String, client: Option<&Client>, timeout: usize)
 
 pub async fn handle_tcp(host: &String, timeout: usize) -> Result<bool> {
 	let timeout = Duration::from_secs(timeout as u64);
-	match get_ipv4_address(host) {
-		Ok(Some(addr)) => Ok(TcpStream::connect_timeout(&SocketAddr::V4(addr), timeout).is_ok()),
+	let resolver = DefaultResolver;
+	match get_address(&resolver, host) {
+		Ok(Some(addr)) => Ok(TcpStream::connect_timeout(&addr, timeout).is_ok()),
 		Ok(None) => {
-			warn!("No IPv4 addresses found for host: {}", host);
+			warn!("Could not resolve DNS for host: {}", host);
 			Ok(false)
 		}
 		Err(e) => {
@@ -133,7 +151,68 @@ pub fn was_successful(failed_hosts: Vec<String>) -> bool {
 pub mod unit_tests {
 	use log::LevelFilter;
 
-	use super::{handler_log, parse_log_level, validate_bind_addr};
+	use super::{get_address, handler_log, parse_log_level, validate_bind_addr};
+	use crate::dns::DnsResolver;
+	use crate::error::Error;
+	use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
+
+	// Setup Mock DNS Resolver
+	struct MockResolver {
+		addrs: Vec<SocketAddr>,
+	}
+
+	impl DnsResolver for MockResolver {
+		fn resolve(&self, _host: &str) -> Result<Vec<SocketAddr>, Error> {
+			Ok(self.addrs.clone())
+		}
+	}
+
+	#[test]
+	fn get_address_ipv4_test() {
+		let resolver = MockResolver {
+			addrs: vec![SocketAddr::V4(SocketAddrV4::new(
+				Ipv4Addr::new(127, 0, 0, 1),
+				8000,
+			))],
+		};
+		let result = get_address(&resolver, "localhost").unwrap();
+		assert_eq!(
+			result,
+			Some(SocketAddr::V4(SocketAddrV4::new(
+				Ipv4Addr::new(127, 0, 0, 1),
+				8000
+			)))
+		);
+	}
+
+	#[test]
+	fn get_address_ipv6_test() {
+		let resolver = MockResolver {
+			addrs: vec![SocketAddr::V6(SocketAddrV6::new(
+				"::1".parse().unwrap(),
+				8000,
+				0,
+				0,
+			))],
+		};
+		let result = get_address(&resolver, "localhost").unwrap();
+		assert_eq!(
+			result,
+			Some(SocketAddr::V6(SocketAddrV6::new(
+				"::1".parse().unwrap(),
+				8000,
+				0,
+				0
+			)))
+		)
+	}
+
+	#[test]
+	fn get_address_no_addresses() {
+		let resolver = MockResolver { addrs: vec![] };
+		let result = get_address(&resolver, "localhost").unwrap();
+		assert_eq!(result, None);
+	}
 
 	#[test]
 	fn validate_bind_addr_test() {
