@@ -36,7 +36,7 @@ RUN apt-get update && apt-get install -y \
 COPY --from=builder /usr/src/can-i-connect/target/aarch64-unknown-linux-musl/release/can-i-connect /usr/local/bin/can-i-connect
 
 # Expose port 8000
-EXPOSE 8000
+EXPOSE 8000 9100
 
 # Set the entrypoint for the container
 ENTRYPOINT ["/usr/local/bin/can-i-connect"]
