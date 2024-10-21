@@ -4,6 +4,7 @@ pub use self::error::{Error, Result};
 // modules
 mod argc;
 mod can_i_connect;
+mod dns;
 mod error;
 mod helpers;
 mod integration_tests;
